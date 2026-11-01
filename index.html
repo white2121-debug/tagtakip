@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="TAG Takip">
 <meta name="theme-color" content="#0E1114">
 <link rel="manifest" href="manifest.webmanifest">
@@ -324,6 +324,8 @@ function tagTip(a){
 function vAyar(){
   var s=S.set;
   var h=head('Ayarlar',false)+'<div class="stack">';
+  var th=s.theme||'auto';
+  h+='<h2>Görünüm</h2><div class="seg" role="group" aria-label="Görünüm">'+[['auto','Otomatik'],['light','Açık'],['dark','Koyu']].map(function(o){return '<button data-theme="'+o[0]+'" aria-pressed="'+(th===o[0])+'">'+o[1]+'</button>'}).join('')+'</div><div class="note">Otomatik: iPhone’un açık/koyu ayarını izler.</div>';
   h+='<h2>TAG paket fiyatları</h2><div class="card stack">'+
      fld('p3','3 saatlik paket (₺)',s.p3)+fld('pDay','Günlük paket (₺)',s.pDay)+fld('pWeek','Haftalık paket (₺)',s.pWeek)+
      '<div class="field"><label class="label" for="quick">Hızlı tutar butonları (virgülle)</label><input id="quick" inputmode="numeric" value="'+s.quick.join(', ')+'"></div>'+
@@ -474,7 +476,8 @@ function val(id){return document.getElementById(id).value}
 /* ---------- Olaylar ---------- */
 var armed=null,armTimer;
 app.addEventListener('click',function(e){
-  var b=e.target.closest('[data-act],[data-del],[data-cat],[data-tag],[data-per],[data-goday]');if(!b)return;
+  var b=e.target.closest('[data-act],[data-del],[data-cat],[data-tag],[data-per],[data-goday],[data-theme]');if(!b)return;
+  if(b.dataset.theme){S.set.theme=b.dataset.theme;save();applyTheme();render();return}
   if(b.dataset.del){
     if(armed!==b.dataset.del){armed=b.dataset.del;app.querySelectorAll('.del.arm').forEach(function(x){x.classList.remove('arm');x.textContent='✕'});b.classList.add('arm');b.textContent='Sil?';clearTimeout(armTimer);armTimer=setTimeout(function(){armed=null;b.classList.remove('arm');b.textContent='✕'},3000);return}
     armed=null;var p=b.dataset.del.split(':'),list={r:'rides',e:'exps',s:'shifts'}[p[0]];
@@ -507,6 +510,12 @@ function toast(m){toastEl.innerHTML='<div class="toast" role="status">'+esc(m)+'
 setInterval(function(){if(activeShift()&&state.tab==='bugun'&&!sheetEl.innerHTML)render()},60000);
 document.addEventListener('visibilitychange',function(){if(!document.hidden&&!sheetEl.innerHTML)render()});
 
+function applyTheme(){var t=S.set.theme||'auto',r=document.documentElement;
+  if(t==='auto')r.removeAttribute('data-theme');else r.setAttribute('data-theme',t);
+  var dark=t==='dark'||(t==='auto'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);
+  var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',dark?'#0E1114':'#ECEEF1');}
+try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',applyTheme)}catch(e){}
+applyTheme();
 render();
 window.__TAG={agg:agg,S:function(){return S}};
 })();
