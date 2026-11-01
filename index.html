@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="tr"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TAG Takip">
+<meta name="theme-color" content="#0E1114">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>:root{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}body{margin:0}[hidden]{display:none!important}</style>
+<title>TAG Takip</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700&display=swap">
+<style>
+/* Yol kenarı tabelası: koyu asfalt zemin, taksi sarısı vurgu, büyük dar rakamlar. Tek el, başparmakla kullanım. */
+:root{
+  --bg:#ECEEF1;--surface:#FFFFFF;--surface2:#F5F6F8;--fg:#14171B;--muted:#5C6570;--line:#D7DBE0;
+  --accent:#F2B705;--accent-ink:#1A1500;--good:#16864A;--bad:#C93C3C;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r:14px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0E1114;--surface:#171B20;--surface2:#1E232A;--fg:#EEF1F4;--muted:#8D97A3;--line:#2A3038;
+  --accent:#FFC61A;--accent-ink:#1A1500;--good:#3CCF7F;--bad:#FF6B6B;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1114;--surface:#171B20;--surface2:#1E232A;--fg:#EEF1F4;--muted:#8D97A3;--line:#2A3038;
+  --accent:#FFC61A;--accent-ink:#1A1500;--good:#3CCF7F;--bad:#FF6B6B;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.4;
+  padding-left:max(0px,env(safe-area-inset-left,0px));padding-right:max(0px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.num{font-family:var(--display);font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.wrap{max-width:520px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 120px}
+
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:12px 10px;display:flex;align-items:center;gap:8px}
+header h1{font-family:var(--display);font-size:22px;margin:0;flex:1;text-transform:uppercase;letter-spacing:.04em}
+header h1 b{background:var(--accent);color:var(--accent-ink);padding:0 6px;border-radius:5px;margin-left:4px}
+.datenav{display:flex;align-items:center;gap:4px}
+.datenav button{width:40px;height:40px;border-radius:10px;background:var(--surface);border:1px solid var(--line);font-size:20px}
+.datenav span{min-width:96px;text-align:center;font-weight:600;font-size:15px}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.stack{display:flex;flex-direction:column;gap:12px}
+.label{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+
+.hero{display:grid;gap:4px}
+.hero .big{font-size:56px;line-height:1;font-weight:700}
+.hero .big.neg{color:var(--bad)}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.stat{background:var(--surface2);border-radius:10px;padding:10px 10px 8px;min-width:0}
+.stat .v{font-size:clamp(17px,5.2vw,22px);font-weight:700;line-height:1.15;overflow-wrap:anywhere}
+.stat .k{font-size:12px;color:var(--muted)}
+
+.shift{display:flex;align-items:center;gap:12px}
+.shift .info{flex:1;min-width:0}
+.shift .t{font-weight:600}
+.shift .s{font-size:13px;color:var(--muted)}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--muted);flex:none}
+.dot.on{background:var(--good);box-shadow:0 0 0 4px color-mix(in srgb,var(--good) 25%,transparent)}
+.btn{height:48px;padding:0 18px;border-radius:12px;font-weight:700;font-size:16px;background:var(--surface2);border:1px solid var(--line)}
+.btn.pri{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.btn.danger{color:var(--bad)}
+.btn.block{width:100%}
+
+.addride{width:100%;height:84px;border-radius:18px;background:var(--accent);color:var(--accent-ink);font-family:var(--display);font-size:34px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;display:flex;align-items:center;justify-content:center;gap:10px}
+.addride:active{transform:scale(.985)}
+
+.list{display:flex;flex-direction:column}
+.row{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.row .main{flex:1;min-width:0}
+.row .main .a{font-weight:600}
+.row .main .b{font-size:13px;color:var(--muted)}
+.row .amt{font-size:22px;font-weight:700}
+.row .amt.minus{color:var(--bad)}
+.del{width:36px;height:36px;border-radius:9px;color:var(--muted);font-size:18px;flex:none}
+.del.arm{background:var(--bad);color:#fff;width:auto;padding:0 10px;font-size:14px;font-weight:700}
+.empty{color:var(--muted);font-size:14px;padding:6px 0}
+h2{font-family:var(--display);font-size:20px;text-transform:uppercase;letter-spacing:.04em;margin:8px 0 0}
+
+.cats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.cat{height:64px;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-weight:700;font-size:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0}
+.cat small{font-weight:500;color:var(--muted);font-size:13px}
+.cat.tag{border-color:var(--accent);border-width:2px}
+
+.seg{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px}
+.seg button{flex:1;height:38px;border-radius:9px;font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.pernav{display:flex;align-items:center;gap:8px}
+.pernav span{flex:1;text-align:center;font-weight:700}
+.pernav button{width:44px;height:40px;border-radius:10px;background:var(--surface);border:1px solid var(--line);font-size:20px}
+
+.bars{display:flex;align-items:flex-end;gap:3px;height:120px;padding-top:8px;border-bottom:1px solid var(--line);overflow-x:auto}
+.bar{flex:1 0 8px;min-width:8px;background:var(--accent);border-radius:3px 3px 0 0}
+.bar.neg{background:var(--bad)}
+.bar.zero{background:var(--line);height:2px!important}
+.barlbl{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:4px}
+
+.kv{display:flex;justify-content:space-between;align-items:baseline;padding:8px 0;border-top:1px solid var(--line);gap:12px}
+.kv:first-child{border-top:0}
+.kv .v{font-size:20px;font-weight:700;white-space:nowrap}
+.tip{background:color-mix(in srgb,var(--accent) 16%,var(--surface));border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-radius:12px;padding:12px 14px;font-size:15px}
+
+.field{display:flex;flex-direction:column;gap:6px}
+.field input{height:50px;border-radius:12px;border:1px solid var(--line);background:var(--surface2);padding:0 14px;font-size:18px;width:100%}
+
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:8;background:var(--surface);border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom,0px);padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px))}
+nav.tabs .in{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+nav.tabs button{height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;font-weight:600;color:var(--muted)}
+nav.tabs button svg{width:24px;height:24px}
+nav.tabs button[aria-current="page"]{color:var(--fg)}
+nav.tabs button[aria-current="page"] svg{color:var(--accent)}
+
+.sheetbg{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center}
+.sheet{width:100%;max-width:520px;background:var(--surface);border-radius:20px 20px 0 0;padding:18px max(16px,env(safe-area-inset-left,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px;max-height:92vh;overflow:auto}
+.sheet h3{margin:0;font-family:var(--display);font-size:24px;text-transform:uppercase;letter-spacing:.03em}
+.amtin{height:76px;border-radius:14px;border:2px solid var(--accent);background:var(--surface2);font-family:var(--display);font-size:46px;font-weight:700;text-align:center;width:100%;font-variant-numeric:tabular-nums}
+.chips{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.chips button{height:50px;border-radius:12px;background:var(--surface2);border:1px solid var(--line);font-family:var(--display);font-size:22px;font-weight:700}
+.sheet .acts{display:grid;grid-template-columns:1fr 2fr;gap:8px}
+.sheet textarea{width:100%;height:140px;border-radius:12px;border:1px solid var(--line);background:var(--surface2);font-size:12px;padding:10px;font-family:ui-monospace,monospace}
+
+.check{display:flex;gap:10px;align-items:flex-start;font-size:15px;font-weight:500}.check input{width:22px;height:22px;margin:1px 0 0;accent-color:var(--accent);flex:none}.check small{color:var(--muted);font-size:13px}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;z-index:30;max-width:calc(100% - 32px)}
+.warn{color:var(--bad);font-size:14px}
+.note{font-size:13px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+</head><body>
+<div class="wrap" id="app"></div>
+<nav class="tabs" aria-label="Bölümler"><div class="in">
+  <button data-tab="bugun"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14l-1.5-6.5A2 2 0 0 0 15.6 9H8.4a2 2 0 0 0-1.9 1.5Z"/><path d="M5 17v2M19 17v2M9 5h6l1 4H8z"/><circle cx="8" cy="14" r="1"/><circle cx="16" cy="14" r="1"/></svg>Gün</button>
+  <button data-tab="gider"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16v12H4z"/><path d="M4 11h16M8 15h3"/><path d="M7 7V5h10v2"/></svg>Gider</button>
+  <button data-tab="rapor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>Rapor</button>
+  <button data-tab="ayar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>Ayarlar</button>
+</div></nav>
+<div id="sheet"></div>
+<div id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+var KEY='tagtakip.v1';
+var DEF={v:1,rides:[],exps:[],shifts:[],set:{p3:449.99,pDay:999.99,pWeek:4999.99,quick:[250,500,750,1000,1500,2000]},lastBackup:null};
+var CATS={tag:'TAG paketi',yakit:'Yakıt',yemek:'Yemek / içecek',bakim:'Bakım / tamir',diger:'Diğer'};
+var AYLAR=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+var GUNLER=['Paz','Pzt','Sal','Çar','Per','Cum','Cmt'];
+
+function clone(o){return JSON.parse(JSON.stringify(o))}
+function load(){
+  try{var r=localStorage.getItem(KEY);if(r){var d=JSON.parse(r);var s=clone(DEF);
+    s.rides=d.rides||[];s.exps=d.exps||[];s.shifts=d.shifts||[];s.lastBackup=d.lastBackup||null;
+    for(var k in d.set||{})s.set[k]=d.set[k];return s;}}catch(e){}
+  return clone(DEF);
+}
+var S=load();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('Kaydedilemedi. Telefon hafızasını kontrol edin.')}}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+
+function pad(n){return(n<10?'0':'')+n}
+function dkey(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
+function pdate(k){var p=k.split('-');return new Date(+p[0],+p[1]-1,+p[2])}
+function addDays(k,n){var d=pdate(k);d.setDate(d.getDate()+n);return dkey(d)}
+function today(){return dkey(new Date())}
+function fmtDay(k){var d=pdate(k);return d.getDate()+' '+AYLAR[d.getMonth()]+' '+GUNLER[d.getDay()]}
+function fmtTime(ts){var d=new Date(ts);return pad(d.getHours())+':'+pad(d.getMinutes())}
+function tl(n){return Math.round(n).toLocaleString('tr-TR')+' ₺'}
+function tl2(n){return n.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})+' ₺'}
+function hrs(ms){var m=Math.round(ms/60000);return Math.floor(m/60)+' sa '+pad(m%60)+' dk'}
+function parseAmt(v){v=String(v||'').trim().replace(/\s/g,'');if(!v)return NaN;
+  if(v.indexOf(',')>-1){v=v.replace(/\./g,'').replace(',','.')}else if(/^\d{1,3}(\.\d{3})+$/.test(v)){v=v.replace(/\./g,'')}
+  return parseFloat(v)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+
+function activeShift(){for(var i=0;i<S.shifts.length;i++)if(!S.shifts[i].end)return S.shifts[i];return null}
+
+var state={tab:'bugun',day:(activeShift()||{}).day||today(),per:'ay',anchor:today()};
+
+/* Toplama: belirli günler için gelir, gider, saat, km */
+function agg(pred){
+  var a={brut:0,gider:0,rides:0,ms:0,km:0,cat:{},days:{},byDay:{}};
+  function D(k){return a.byDay[k]||(a.byDay[k]={brut:0,gider:0,rides:0,ms:0,km:0})}
+  S.rides.forEach(function(r){if(!pred(r.day))return;a.brut+=r.amount;a.rides++;a.days[r.day]=1;var d=D(r.day);d.brut+=r.amount;d.rides++});
+  S.exps.forEach(function(e){if(!pred(e.day))return;a.gider+=e.amount;a.cat[e.cat]=(a.cat[e.cat]||0)+e.amount;D(e.day).gider+=e.amount});
+  S.shifts.forEach(function(s){if(!pred(s.day))return;var end=s.end||Date.now();var ms=Math.max(0,end-s.start);a.ms+=ms;a.days[s.day]=1;var d=D(s.day);d.ms+=ms;
+    if(s.end&&s.kmEnd!=null&&s.kmStart!=null&&s.kmEnd>=s.kmStart){var k=s.kmEnd-s.kmStart;a.km+=k;d.km+=k}});
+  a.net=a.brut-a.gider;a.nDays=Object.keys(a.days).length;return a;
+}
+
+/* ---------- Ekranlar ---------- */
+var app=document.getElementById('app');
+function render(){
+  document.querySelectorAll('nav.tabs button').forEach(function(b){if(b.dataset.tab===state.tab)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
+  ({bugun:vBugun,gider:vGider,rapor:vRapor,ayar:vAyar})[state.tab]();
+  if(render.last!==state.tab){window.scrollTo(0,0);render.last=state.tab}
+}
+function head(title,withDate){
+  var h='<header><h1>'+title+'</h1>';
+  if(withDate){var isT=state.day===today();
+    h+='<div class="datenav"><button data-act="dprev" aria-label="Önceki gün">‹</button><span>'+(isT?'Bugün':fmtDay(state.day))+'</span><button data-act="dnext" aria-label="Sonraki gün" '+(isT?'disabled style="opacity:.35"':'')+'>›</button></div>'}
+  return h+'</header>';
+}
+
+function vBugun(){
+  var k=state.day,a=agg(function(d){return d===k}),sh=activeShift();
+  var dayShifts=S.shifts.filter(function(s){return s.day===k&&s.end});
+  var h=head('TAG<b>Takip</b>',true)+'<div class="stack">';
+  h+='<div class="card hero"><div class="label">'+(k===today()?'Bugünkü net kazanç':fmtDay(k)+' net kazanç')+'</div>'+
+     '<div class="big num'+(a.net<0?' neg':'')+'">'+tl(a.net)+'</div>'+
+     '<div class="grid3" style="margin-top:10px">'+
+       stat(a.rides,'Yolcu')+stat(tl(a.brut),'Brüt')+stat(tl(a.gider),'Gider')+
+     '</div>'+
+     '<div class="grid3">'+stat(a.ms?hrsShort(a.ms):'–','Çalışma')+stat(a.km?a.km.toLocaleString('tr-TR')+' km':'–','Yol')+stat(a.ms>=600000?tl(a.net/(a.ms/3600000)):'–','Saat başı net')+'</div></div>';
+
+  if(sh){h+='<div class="card shift"><span class="dot on"></span><div class="info"><div class="t">Mesai devam ediyor</div><div class="s">'+fmtTime(sh.start)+' başladı · '+hrs(Date.now()-sh.start)+(sh.kmStart!=null?' · başlangıç '+sh.kmStart.toLocaleString('tr-TR')+' km':'')+'</div></div><button class="btn" data-act="endshift">Bitir</button></div>'}
+  else{h+='<div class="card shift"><span class="dot"></span><div class="info"><div class="t">Mesai kapalı</div><div class="s">'+(dayShifts.length?dayShifts.length+' mesai kaydı · '+hrsShort(a.ms):'Saat ve km takibi için başlatın')+'</div></div><button class="btn pri" data-act="startshift">Başlat</button></div>'}
+
+  h+='<button class="addride" data-act="addride"><span style="font-size:40px;line-height:0">+</span> Yolcu</button>';
+
+  h+='<h2>Kayıtlar</h2><div class="card"><div class="list">';
+  var items=[];
+  S.rides.forEach(function(r){if(r.day===k)items.push({t:r.ts,html:rowHtml('r',r.id,'Yolcu',fmtTime(r.ts),'+'+tl(r.amount),'')})});
+  S.exps.forEach(function(e){if(e.day===k)items.push({t:e.ts,html:rowHtml('e',e.id,CATS[e.cat]+(e.note?' · '+esc(e.note):''),fmtTime(e.ts),'−'+tl(e.amount),'minus')})});
+  dayShifts.forEach(function(s){var km=(s.kmEnd!=null&&s.kmStart!=null)?' · '+(s.kmEnd-s.kmStart).toLocaleString('tr-TR')+' km':'';
+    items.push({t:s.start,html:rowHtml('s',s.id,'Mesai',fmtTime(s.start)+'–'+fmtTime(s.end)+' · '+hrsShort(s.end-s.start)+km,'','')})});
+  items.sort(function(x,y){return y.t-x.t});
+  h+=items.length?items.map(function(i){return i.html}).join(''):'<div class="empty">Bu gün için kayıt yok. Yolcu aldıkça “+ Yolcu”ya basın.</div>';
+  h+='</div></div>';
+  if(needBackup())h+='<div class="tip">Son yedeğin üzerinden 7 günden fazla geçti. Ayarlar &gt; Yedekle ile verilerinizi bir dosyaya kaydedin.</div>';
+  app.innerHTML=h+'</div>';
+}
+function stat(v,k){return '<div class="stat"><div class="v num">'+v+'</div><div class="k">'+k+'</div></div>'}
+function hrsShort(ms){var m=Math.round(ms/60000);return Math.floor(m/60)+':'+pad(m%60)+' sa'}
+function rowHtml(type,id,a,b,amt,cls){return '<div class="row"><div class="main"><div class="a">'+a+'</div><div class="b">'+b+'</div></div>'+(amt?'<div class="amt num '+cls+'">'+amt+'</div>':'')+'<button class="del" data-del="'+type+':'+id+'" aria-label="Sil">✕</button></div>'}
+
+function vGider(){
+  var k=state.day,s=S.set;
+  var h=head('Gider',true)+'<div class="stack">';
+  h+='<div class="label">TAG paketi (fiyatı kontrol edip kaydedin)</div><div class="cats">'+
+     '<button class="cat tag" data-tag="3"><span>3 Saatlik</span><small class="num">'+tl2(s.p3)+'</small></button>'+
+     '<button class="cat tag" data-tag="g"><span>Günlük</span><small class="num">'+tl2(s.pDay)+'</small></button>'+
+     '<button class="cat tag" data-tag="h" style="grid-column:span 2"><span>Haftalık</span><small class="num">'+tl2(s.pWeek)+'</small></button></div>';
+  h+='<div class="label" style="margin-top:6px">Diğer giderler</div><div class="cats">'+
+     ['yakit','yemek','bakim','diger'].map(function(c){return '<button class="cat" data-cat="'+c+'">'+CATS[c]+'</button>'}).join('')+'</div>';
+  var ex=S.exps.filter(function(e){return e.day===k}).sort(function(x,y){return y.ts-x.ts});
+  var tot=ex.reduce(function(t,e){return t+e.amount},0);
+  h+='<h2>'+(k===today()?'Bugünkü':fmtDay(k))+' giderler · <span class="num">'+tl(tot)+'</span></h2><div class="card"><div class="list">'+
+     (ex.length?ex.map(function(e){return rowHtml('e',e.id,CATS[e.cat]+(e.note?' · '+esc(e.note):''),fmtTime(e.ts),'−'+tl(e.amount),'minus')}).join(''):'<div class="empty">Bu gün için gider yok.</div>')+'</div></div>';
+  app.innerHTML=h+'</div>';
+}
+
+function periodRange(){
+  var a=pdate(state.anchor),from,to,label;
+  if(state.per==='hafta'){var wd=(a.getDay()+6)%7;var f=new Date(a);f.setDate(a.getDate()-wd);var t=new Date(f);t.setDate(f.getDate()+6);
+    from=dkey(f);to=dkey(t);label=f.getDate()+' '+AYLAR[f.getMonth()].slice(0,3)+' – '+t.getDate()+' '+AYLAR[t.getMonth()].slice(0,3);}
+  else if(state.per==='ay'){var f2=new Date(a.getFullYear(),a.getMonth(),1),t2=new Date(a.getFullYear(),a.getMonth()+1,0);from=dkey(f2);to=dkey(t2);label=AYLAR[a.getMonth()]+' '+a.getFullYear();}
+  else{from='0000-00-00';to='9999-99-99';label='Tüm kayıtlar';}
+  return{from:from,to:to,label:label};
+}
+function vRapor(){
+  var R=periodRange(),a=agg(function(d){return d>=R.from&&d<=R.to});
+  var h=head('Rapor',false)+'<div class="stack">';
+  h+='<div class="seg" role="group">'+[['hafta','Hafta'],['ay','Ay'],['tum','Tümü']].map(function(p){return '<button data-per="'+p[0]+'" aria-pressed="'+(state.per===p[0])+'">'+p[1]+'</button>'}).join('')+'</div>';
+  if(state.per!=='tum')h+='<div class="pernav"><button data-act="pprev" aria-label="Önceki">‹</button><span>'+R.label+'</span><button data-act="pnext" aria-label="Sonraki">›</button></div>';
+  h+='<div class="card hero"><div class="label">Net kazanç</div><div class="big num'+(a.net<0?' neg':'')+'">'+tl(a.net)+'</div>'+
+     '<div class="grid3" style="margin-top:10px">'+stat(tl(a.brut),'Brüt gelir')+stat(tl(a.gider),'Toplam gider')+stat(a.nDays,'Çalışılan gün')+'</div></div>';
+
+  var hours=a.ms/3600000,veh=(a.cat.yakit||0)+(a.cat.bakim||0);
+  h+='<div class="card"><div class="list">'+
+     kv('Günlük ortalama net <span class="note">(çalışılan gün)</span>',a.nDays?tl(a.net/a.nDays):'–')+
+     kv('Günlük ortalama brüt',a.nDays?tl(a.brut/a.nDays):'–')+
+     kv('Saat başı net',hours>=0.17?tl(a.net/hours):'–')+
+     kv('Yolcu sayısı',a.rides.toLocaleString('tr-TR'))+
+     kv('Yolcu başı ortalama',a.rides?tl(a.brut/a.rides):'–')+
+     kv('Toplam çalışma',a.ms?hrsShort(a.ms):'–')+
+     kv('Toplam yol',a.km?a.km.toLocaleString('tr-TR')+' km':'–')+
+     kv('Km başı araç maliyeti <span class="note">(yakıt + bakım)</span>',a.km?tl2(veh/a.km):'–')+
+     kv('Km başı tüm gider',a.km?tl2(a.gider/a.km):'–')+
+     kv('Km başı net kazanç',a.km?tl2(a.net/a.km):'–')+
+     '</div>'+(a.km?'':'<div class="note" style="margin-top:6px">Km hesapları için mesaiyi başlatıp bitirirken km girin.</div>')+'</div>';
+
+  if(state.per!=='tum'){
+    var days=[],d=R.from;while(d<=R.to){days.push(d);d=addDays(d,1)}
+    var max=1;days.forEach(function(k){var x=a.byDay[k];if(x)max=Math.max(max,Math.abs(x.brut-x.gider))});
+    h+='<h2>Günlük net</h2><div class="card"><div class="bars">'+days.map(function(k){var x=a.byDay[k];if(!x||(!x.brut&&!x.gider))return '<div class="bar zero" title="'+fmtDay(k)+'"></div>';
+      var n=x.brut-x.gider;return '<div class="bar'+(n<0?' neg':'')+'" style="height:'+Math.max(3,Math.abs(n)/max*100)+'%" title="'+fmtDay(k)+': '+tl(n)+'"></div>'}).join('')+
+      '</div><div class="barlbl"><span>'+pdate(R.from).getDate()+' '+AYLAR[pdate(R.from).getMonth()].slice(0,3)+'</span><span>'+pdate(R.to).getDate()+' '+AYLAR[pdate(R.to).getMonth()].slice(0,3)+'</span></div></div>';
+  }
+
+  var catKeys=Object.keys(CATS).filter(function(c){return a.cat[c]});
+  h+='<h2>Gider dağılımı</h2><div class="card"><div class="list">'+(catKeys.length?catKeys.map(function(c){return kv(CATS[c]+' <span class="note">%'+Math.round(a.cat[c]/a.gider*100)+'</span>',tl(a.cat[c]))}).join(''):'<div class="empty">Bu dönemde gider yok.</div>')+'</div></div>';
+
+  h+='<h2>TAG paketi seçimi</h2><div class="tip">'+tagTip(a)+'</div>';
+
+  var wd=Object.keys(a.byDay).filter(function(k){var x=a.byDay[k];return x.brut||x.gider||x.ms}).sort().reverse();
+  h+='<h2>Günler</h2><div class="card"><div class="list">'+(wd.length?wd.map(function(k){var x=a.byDay[k];var n=x.brut-x.gider;
+    return '<div class="row" data-goday="'+k+'" style="cursor:pointer"><div class="main"><div class="a">'+fmtDay(k)+'</div><div class="b">'+x.rides+' yolcu · brüt '+tl(x.brut)+' · gider '+tl(x.gider)+(x.ms?' · '+hrsShort(x.ms):'')+'</div></div><div class="amt num'+(n<0?' minus':'')+'">'+tl(n)+'</div></div>'}).join(''):'<div class="empty">Bu dönemde kayıt yok.</div>')+'</div></div>';
+  app.innerHTML=h+'</div>';
+}
+function kv(k,v){return '<div class="kv"><span>'+k+'</span><span class="v num">'+v+'</span></div>'}
+function tagTip(a){
+  var s=S.set,blocks=Math.floor(s.pDay/s.p3),hLimit=blocks*3,d=1;
+  while(d*s.pDay<s.pWeek*0.99&&d<7)d++;
+  var t='Bir günde <b>'+hLimit+' saatten fazla</b> çalışacaksanız günlük paket, 3 saatlik paketlerden ucuz gelir ('+(blocks+1)+' × '+tl(s.p3)+' = '+tl((blocks+1)*s.p3)+').';
+  if(Math.abs(d*s.pDay-s.pWeek)<s.pWeek*0.01)t+=' Haftada <b>'+d+' gün</b> çalışırsanız günlük ve haftalık paket aynı tutar; <b>'+(d+1)+' gün ve üzeri</b> çalışacaksanız haftalık paket kazandırır.';
+  else t+=' Haftada <b>'+d+' gün ve üzeri</b> çalışacaksanız haftalık paket, günlük paketlerden ucuzdur.';
+  if(a.cat.tag)t+='<br><br>Bu dönemde TAG paketlerine <b class="num">'+tl(a.cat.tag)+'</b> ödediniz; bu, brüt gelirin <b>%'+(a.brut?Math.round(a.cat.tag/a.brut*100):0)+'</b>’i.';
+  if(state.per==='ay'&&a.nDays){var R=periodRange(),end=R.to<today()?R.to:today();var weeks=((pdate(end)-pdate(R.from))/864e5+1)/7;
+    if(weeks>=1)t+=' Bu ay haftada ortalama <b>'+(a.nDays/weeks).toLocaleString('tr-TR',{maximumFractionDigits:1})+' gün</b> çalıştınız.'}
+  return t;
+}
+
+function vAyar(){
+  var s=S.set;
+  var h=head('Ayarlar',false)+'<div class="stack">';
+  h+='<h2>TAG paket fiyatları</h2><div class="card stack">'+
+     fld('p3','3 saatlik paket (₺)',s.p3)+fld('pDay','Günlük paket (₺)',s.pDay)+fld('pWeek','Haftalık paket (₺)',s.pWeek)+
+     '<div class="field"><label class="label" for="quick">Hızlı tutar butonları (virgülle)</label><input id="quick" inputmode="numeric" value="'+s.quick.join(', ')+'"></div>'+
+     '<button class="btn pri block" data-act="saveset">Kaydet</button></div>';
+  h+='<h2>Yedekleme</h2><div class="card stack"><div class="note">Veriler yalnızca bu telefonda durur. Haftada bir yedek alıp dosyayı iCloud Drive’a veya WhatsApp’ta kendinize gönderin.'+
+     (S.lastBackup?' Son yedek: <b>'+fmtDay(dkey(new Date(S.lastBackup)))+'</b>.':' Henüz yedek alınmadı.')+'</div>'+
+     '<button class="btn pri block" data-act="backup">Yedekle (dosya)</button>'+
+     '<button class="btn block" data-act="restore">Yedekten geri yükle</button>'+
+     '<button class="btn block" data-act="csv">Excel için dışa aktar (CSV)</button>'+
+     '<input type="file" id="restorefile" accept=".json,application/json,text/plain" hidden></div>';
+  h+='<h2>Özet</h2><div class="card"><div class="list">'+kv('Yolcu kaydı',S.rides.length)+kv('Gider kaydı',S.exps.length)+kv('Mesai kaydı',S.shifts.length)+'</div></div>';
+  h+='<button class="btn danger block" data-act="wipe">Tüm verileri sil</button>';
+  app.innerHTML=h+'</div>';
+}
+function fld(id,l,v){return '<div class="field"><label class="label" for="'+id+'">'+l+'</label><input id="'+id+'" inputmode="decimal" value="'+String(v).replace('.',',')+'"></div>'}
+
+/* ---------- Alt pencereler ---------- */
+var sheetEl=document.getElementById('sheet');
+function openSheet(html,onReady){
+  sheetEl.innerHTML='<div class="sheetbg" data-close="1"><div class="sheet" role="dialog" aria-modal="true">'+html+'</div></div>';
+  if(onReady)onReady(sheetEl.querySelector('.sheet'));
+}
+function closeSheet(){sheetEl.innerHTML=''}
+sheetEl.addEventListener('click',function(e){if(e.target.dataset&&e.target.dataset.close)closeSheet()});
+
+function amountSheet(title,quick,onOk,extra,prefill){
+  openSheet('<h3>'+title+'</h3><input class="amtin" id="amt" inputmode="decimal" placeholder="0" autocomplete="off" value="'+(prefill||'')+'">'+
+    (quick&&quick.length?'<div class="chips">'+quick.map(function(q){return '<button data-q="'+q+'">'+q.toLocaleString('tr-TR')+'</button>'}).join('')+'</div>':'')+
+    (extra||'')+'<div class="acts"><button class="btn" data-x="1">Vazgeç</button><button class="btn pri" data-ok="1">Kaydet</button></div>',
+  function(sh){
+    var inp=sh.querySelector('#amt');setTimeout(function(){inp.focus();if(prefill)inp.select()},60);
+    sh.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
+      if(b.dataset.q){inp.value=b.dataset.q;inp.focus()}
+      if(b.dataset.x)closeSheet();
+      if(b.dataset.ok)submit()});
+    inp.addEventListener('keydown',function(e){if(e.key==='Enter')submit()});
+    function submit(){var v=parseAmt(inp.value);if(!(v>0)){toast('Geçerli bir tutar girin');inp.focus();return}if(onOk(v,sh)!==false)closeSheet()}
+  });
+}
+
+function addRide(){
+  amountSheet('Yolcu ücreti',S.set.quick,function(v){
+    S.rides.push({id:uid(),day:state.day,ts:stampFor(state.day),amount:v});save();render();toast('+'+tl(v)+' eklendi');
+  });
+}
+function stampFor(k){var n=new Date();if(k===today())return n.getTime();var sh=activeShift();if(sh&&sh.day===k)return n.getTime();var d=pdate(k);d.setHours(n.getHours(),n.getMinutes());return d.getTime()}
+function addExp(cat){
+  amountSheet(CATS[cat],cat==='yakit'?[500,1000,1500,2000]:cat==='yemek'?[100,200,300]:[],function(v,sh){
+    var note=(sh.querySelector('#note')||{}).value||'';
+    S.exps.push({id:uid(),day:state.day,ts:stampFor(state.day),cat:cat,amount:v,note:note.trim()});save();render();toast(CATS[cat]+' −'+tl(v));
+  },'<div class="field"><label class="label" for="note">Not (isteğe bağlı)</label><input id="note" placeholder="'+(cat==='bakim'?'ör. yağ değişimi':'')+'"></div>');
+}
+function addTag(t){
+  var s=S.set,map={'3':['3 saatlik','p3'],g:['Günlük','pDay'],h:['Haftalık','pWeek']};var m=map[t],old=s[m[1]];
+  amountSheet('TAG '+m[0].toLowerCase()+' paket',[],function(v,sh){
+    var keep=sh.querySelector('#keepprice').checked,changed=Math.abs(v-old)>0.001;
+    S.exps.push({id:uid(),day:state.day,ts:stampFor(state.day),cat:'tag',amount:v,note:m[0]});
+    if(changed&&keep)S.set[m[1]]=v;
+    save();render();toast(changed&&keep?'Paket eklendi · yeni fiyat kaydedildi':'TAG '+m[0].toLowerCase()+' paket eklendi');
+  },'<div class="note">Son kayıtlı fiyat <b>'+tl2(old)+'</b>. Uygulamadaki fiyat farklıysa tutarı değiştirin.</div>'+
+    '<label class="check"><input type="checkbox" id="keepprice" checked><span>Fiyat değiştiyse bundan sonra bu fiyatı kullan<br><small>Tek seferlik indirimse işareti kaldırın.</small></span></label>',
+  String(old).replace('.',','));
+}
+function lastKm(){var m=null;S.shifts.forEach(function(s){if(s.kmEnd!=null&&(m==null||s.end>m.end))m=s});return m?m.kmEnd:''}
+function startShift(){
+  openSheet('<h3>Mesaiye başla</h3><div class="field"><label class="label" for="km">Araç km (gösterge)</label><input id="km" class="amtin" inputmode="numeric" value="'+lastKm()+'" placeholder="ör. 84250"></div><div class="note">Km girmezseniz yalnızca süre tutulur.</div><div class="acts"><button class="btn" data-x="1">Vazgeç</button><button class="btn pri" data-ok="1">Başlat</button></div>',function(sh){
+    sh.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;if(b.dataset.x)closeSheet();
+      if(b.dataset.ok){var km=parseAmt(sh.querySelector('#km').value);var t=today();
+        S.shifts.push({id:uid(),day:t,start:Date.now(),end:null,kmStart:km>=0?km:null,kmEnd:null});state.day=t;save();closeSheet();render();toast('Mesai başladı')}});
+  });
+}
+function endShift(){
+  var sh0=activeShift();if(!sh0)return;
+  openSheet('<h3>Mesaiyi bitir</h3><div class="note">'+fmtTime(sh0.start)+' başladı · '+hrs(Date.now()-sh0.start)+(sh0.kmStart!=null?' · başlangıç '+sh0.kmStart.toLocaleString('tr-TR')+' km':'')+'</div><div class="field"><label class="label" for="km">Bitiş km</label><input id="km" class="amtin" inputmode="numeric" placeholder="'+(sh0.kmStart!=null?sh0.kmStart:'')+'"></div><div class="acts"><button class="btn" data-x="1">Vazgeç</button><button class="btn pri" data-ok="1">Bitir</button></div>',function(sh){
+    var inp=sh.querySelector('#km');setTimeout(function(){inp.focus()},60);
+    sh.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;if(b.dataset.x)closeSheet();
+      if(b.dataset.ok){var km=parseAmt(inp.value);
+        if(km>=0&&sh0.kmStart!=null&&km<sh0.kmStart){toast('Bitiş km başlangıçtan küçük olamaz');return}
+        sh0.end=Date.now();sh0.kmEnd=km>=0?km:null;if(sh0.kmStart==null)sh0.kmEnd=null;save();closeSheet();render();
+        toast('Mesai bitti'+(sh0.kmEnd!=null?' · '+(sh0.kmEnd-sh0.kmStart).toLocaleString('tr-TR')+' km':''))}});
+  });
+}
+
+/* ---------- Yedekleme ---------- */
+function needBackup(){var n=S.rides.length+S.exps.length;if(n<5)return false;return !S.lastBackup||Date.now()-S.lastBackup>7*864e5}
+function exportFile(name,text,mime,onDone){
+  var file;try{file=new File([text],name,{type:mime})}catch(e){}
+  if(file&&navigator.canShare&&navigator.canShare({files:[file]})){
+    navigator.share({files:[file],title:name}).then(function(){onDone&&onDone();toast('Dosya paylaşıldı')}).catch(function(err){if(err&&err.name==='AbortError')return;fallback()});return;
+  }
+  fallback();
+  function fallback(){
+    var url='';try{url=URL.createObjectURL(new Blob([text],{type:mime}))}catch(e){}
+    openSheet('<h3>'+esc(name)+'</h3><div class="note">Dosyayı indirin. İnmezse metni kopyalayıp Notlar’a veya WhatsApp’ta kendinize yapıştırın.</div>'+
+      (url?'<a class="btn pri block" style="display:flex;align-items:center;justify-content:center;text-decoration:none" href="'+url+'" download="'+esc(name)+'" data-dl="1">Dosyayı indir</a>':'')+
+      '<textarea id="exptxt" readonly>'+esc(text)+'</textarea><div class="acts"><button class="btn" data-x="1">Kapat</button><button class="btn" data-copy="1">Metni kopyala</button></div>',function(sh){
+      sh.addEventListener('click',function(e){var b=e.target.closest('button,a');if(!b)return;
+        if(b.dataset.x)closeSheet();
+        if(b.dataset.dl)onDone&&onDone();
+        if(b.dataset.copy){var ta=sh.querySelector('#exptxt');
+          var p=navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(text):Promise.reject();
+          p.then(function(){onDone&&onDone();toast('Kopyalandı')}).catch(function(){ta.focus();ta.select();toast('Metni seçip kopyalayın')})}});
+    });
+  }
+}
+function backup(){
+  var d=new Date();var name='tag-takip-yedek-'+dkey(d)+'.json';
+  var data=clone(S);data.exportedAt=d.toISOString();
+  exportFile(name,JSON.stringify(data),'application/json',function(){S.lastBackup=Date.now();save()});
+}
+function csv(){
+  var lines=['Tarih;Saat;Tür;Kategori;Tutar;Not'];
+  var all=[];S.rides.forEach(function(r){all.push([r.day,fmtTime(r.ts),'Gelir','Yolcu',r.amount,''])});
+  S.exps.forEach(function(e){all.push([e.day,fmtTime(e.ts),'Gider',CATS[e.cat],e.amount,e.note||''])});
+  S.shifts.forEach(function(s){if(s.end)all.push([s.day,fmtTime(s.start),'Mesai',hrsShort(s.end-s.start),'',(s.kmEnd!=null&&s.kmStart!=null)?(s.kmEnd-s.kmStart)+' km':''])});
+  all.sort(function(a,b){return(a[0]+a[1]).localeCompare(b[0]+b[1])});
+  all.forEach(function(r){lines.push(r.map(function(c){return typeof c==='number'?String(c).replace('.',','):'"'+String(c).replace(/"/g,'""')+'"'}).join(';'))});
+  exportFile('tag-takip-'+today()+'.csv','﻿'+lines.join('\n'),'text/csv');
+}
+function restore(){var fi=document.getElementById('restorefile');fi.value='';fi.click()}
+document.addEventListener('change',function(e){
+  if(e.target.id!=='restorefile'||!e.target.files[0])return;
+  var rd=new FileReader();rd.onload=function(){
+    var d;try{d=JSON.parse(rd.result)}catch(err){toast('Dosya okunamadı. Doğru yedek dosyasını seçin.');return}
+    if(!d||!Array.isArray(d.rides)||!Array.isArray(d.exps)){toast('Bu dosya bir TAG Takip yedeği değil.');return}
+    openSheet('<h3>Yedeği geri yükle</h3><div>Yedekte <b>'+d.rides.length+'</b> yolcu ve <b>'+d.exps.length+'</b> gider kaydı var. Telefondaki mevcut kayıtların yerine geçecek.</div><div class="acts"><button class="btn" data-x="1">Vazgeç</button><button class="btn pri" data-ok="1">Geri yükle</button></div>',function(sh){
+      sh.addEventListener('click',function(ev){var b=ev.target.closest('button');if(!b)return;if(b.dataset.x)closeSheet();
+        if(b.dataset.ok){var s=clone(DEF);s.rides=d.rides;s.exps=d.exps;s.shifts=d.shifts||[];for(var k in d.set||{})s.set[k]=d.set[k];s.lastBackup=d.lastBackup||Date.now();
+          S=s;save();closeSheet();state.day=(activeShift()||{}).day||today();render();toast('Yedek geri yüklendi')}});
+    });
+  };rd.readAsText(e.target.files[0]);
+});
+function wipe(){
+  openSheet('<h3>Tüm verileri sil</h3><div>Bütün yolcu, gider ve mesai kayıtları silinir. Geri alınamaz. Önce yedek almanızı öneririz.</div><div class="field"><label class="label" for="conf">Onay için SİL yazın</label><input id="conf" autocomplete="off"></div><div class="acts"><button class="btn" data-x="1">Vazgeç</button><button class="btn danger" data-ok="1">Sil</button></div>',function(sh){
+    sh.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;if(b.dataset.x)closeSheet();
+      if(b.dataset.ok){if(sh.querySelector('#conf').value.trim().toLocaleUpperCase('tr-TR')!=='SİL'){toast('Onay için SİL yazın');return}
+        var set=S.set;S=clone(DEF);S.set=set;save();closeSheet();state.day=today();render();toast('Veriler silindi')}});
+  });
+}
+function saveSet(){
+  var p3=parseAmt(val('p3')),pd=parseAmt(val('pDay')),pw=parseAmt(val('pWeek'));
+  if(!(p3>0&&pd>0&&pw>0)){toast('Paket fiyatlarını kontrol edin');return}
+  var q=val('quick').split(/[,;\s]+/).map(parseAmt).filter(function(x){return x>0}).slice(0,9);
+  S.set.p3=p3;S.set.pDay=pd;S.set.pWeek=pw;if(q.length)S.set.quick=q;save();render();toast('Ayarlar kaydedildi');
+}
+function val(id){return document.getElementById(id).value}
+
+/* ---------- Olaylar ---------- */
+var armed=null,armTimer;
+app.addEventListener('click',function(e){
+  var b=e.target.closest('[data-act],[data-del],[data-cat],[data-tag],[data-per],[data-goday]');if(!b)return;
+  if(b.dataset.del){
+    if(armed!==b.dataset.del){armed=b.dataset.del;app.querySelectorAll('.del.arm').forEach(function(x){x.classList.remove('arm');x.textContent='✕'});b.classList.add('arm');b.textContent='Sil?';clearTimeout(armTimer);armTimer=setTimeout(function(){armed=null;b.classList.remove('arm');b.textContent='✕'},3000);return}
+    armed=null;var p=b.dataset.del.split(':'),list={r:'rides',e:'exps',s:'shifts'}[p[0]];
+    S[list]=S[list].filter(function(x){return x.id!==p[1]});save();render();toast('Silindi');return;
+  }
+  if(b.dataset.cat)return addExp(b.dataset.cat);
+  if(b.dataset.tag)return addTag(b.dataset.tag);
+  if(b.dataset.per){state.per=b.dataset.per;state.anchor=today();return render()}
+  if(b.dataset.goday){state.day=b.dataset.goday;state.tab='bugun';return render()}
+  var a=b.dataset.act;
+  if(a==='dprev'){state.day=addDays(state.day,-1);render()}
+  if(a==='dnext'&&state.day<today()){state.day=addDays(state.day,1);render()}
+  if(a==='addride')addRide();
+  if(a==='startshift')startShift();
+  if(a==='endshift')endShift();
+  if(a==='pprev'||a==='pnext'){var dir=a==='pprev'?-1:1,d=pdate(state.anchor);
+    if(state.per==='hafta')d.setDate(d.getDate()+7*dir);else d=new Date(d.getFullYear(),d.getMonth()+dir,1);state.anchor=dkey(d);render()}
+  if(a==='saveset')saveSet();
+  if(a==='backup')backup();
+  if(a==='restore')restore();
+  if(a==='csv')csv();
+  if(a==='wipe')wipe();
+});
+document.querySelector('nav.tabs').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;state.tab=b.dataset.tab;if(state.tab!=='rapor')state.day=state.day||today();render()});
+
+var toastEl=document.getElementById('toast'),tt;
+function toast(m){toastEl.innerHTML='<div class="toast" role="status">'+esc(m)+'</div>';clearTimeout(tt);tt=setTimeout(function(){toastEl.innerHTML=''},2200)}
+
+/* Açık mesai varken ekranı her dakika tazele */
+setInterval(function(){if(activeShift()&&state.tab==='bugun'&&!sheetEl.innerHTML)render()},60000);
+document.addEventListener('visibilitychange',function(){if(!document.hidden&&!sheetEl.innerHTML)render()});
+
+render();
+window.__TAG={agg:agg,S:function(){return S}};
+})();
+</script>
+
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}</script>
+</body></html>
